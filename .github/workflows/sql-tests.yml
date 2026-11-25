@@ -1,0 +1,32 @@
+name: SQL tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pytest
+        run: pip install -r requirements.txt
+
+      - name: Run the test suite
+        run: pytest -v
+
+      - name: Data-quality report, clean database (must pass)
+        run: python dq.py
+
+      - name: Data-quality report, buggy database (must find every defect)
+        run: |
+          if python dq.py --buggy --show; then
+            echo "Expected the checks to fail on the buggy database" && exit 1
+          fi
